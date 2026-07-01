@@ -1,22 +1,18 @@
 import { NextResponse } from "next/server";
 
-interface OutfitRequest {
+interface OutfitRequest{
   occasion: string;
-  style: string;
-  weather?: string | null;
+  style:string;
+  weather?: string|null;
 }
-
-export async function POST(req: Request) {
+export async function POST(req:Request) {
   const body: OutfitRequest = await req.json();
-  const { occasion, style, weather } = body;
+  const {occasion, style, weather} = body;
 
-  const outfit = generateOutfit(occasion, style, weather ?? null);
-
-  return NextResponse.json({ outfit });
+  const outfit = generateOutfit(occasion,style,weather ?? null);
+  return NextResponse.json({outfit});
+  
 }
-
-// ─── Mock outfit logic ────────────────────────────────────────────────────────
-// Replace this with real AI (Gemini / OpenAI) when ready
 
 function generateOutfit(
   occasion: string,
@@ -24,37 +20,29 @@ function generateOutfit(
   weather: string | null
 ): string[] {
   const isCold = weather === "cold";
-  const isHot = weather === "hot" || weather === "sunny";
+   const isHot = weather === "hot" || weather === "sunny";
   const isRainy = weather === "rainy";
 
-  // Work / Formal
   if (occasion === "work" || style === "formal") {
     if (isCold) return ["Wool Trench Coat", "White Button-up Shirt", "Dress Trousers", "Oxford Shoes"];
     return ["Blazer", "White Button-up Shirt", "Tailored Trousers", "Loafers"];
   }
 
-  // Date / Elegant
-  if (occasion === "date" || style === "elegant") {
+   if (occasion === "date" || style === "elegant") {
     if (isCold) return ["Long Camel Coat", "Silk Blouse", "Black Midi Skirt", "Ankle Boots"];
     return ["Satin Slip Dress", "Strappy Heels", "Small Shoulder Bag"];
   }
-
-  // Party
-  if (occasion === "party") {
+   if (occasion === "party") {
     return ["Sequin Top", "High-waist Trousers", "Block Heels", "Clutch Bag"];
   }
-
-  // Streetwear
-  if (style === "streetwear") {
+   if (style === "streetwear") {
     if (isCold) return ["Puffer Jacket", "Graphic Hoodie", "Cargo Pants", "Chunky Sneakers"];
     return ["Graphic Tee", "Baggy Jeans", "Air Force 1s", "Cap"];
   }
 
-  // School + Casual + Minimal (default)
   if (isCold) {
     return ["Beige Oversized Hoodie", "Black Puffer Jacket", "Light Blue Straight Jeans", "White Sneakers", "Black Beanie & Backpack"];
   }
-
   if (isHot) {
     return ["Linen Shirt", "Shorts", "Slip-on Sneakers", "Sunglasses"];
   }
@@ -62,7 +50,5 @@ function generateOutfit(
   if (isRainy) {
     return ["Waterproof Jacket", "Roll-neck Sweater", "Slim Jeans", "Chelsea Boots"];
   }
-
-  // Default casual / minimal / school
-  return ["White T-shirt", "Mom Jeans", "White Sneakers", "Tote Bag"];
+   return ["White T-shirt", "Mom Jeans", "White Sneakers", "Tote Bag"];
 }

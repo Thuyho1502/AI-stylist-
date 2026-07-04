@@ -10,7 +10,7 @@ const outfitItems = [
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-violet-50 to-white">
+    <section className="relative overflow-hidden bg-linear-to-b from-violet-50 to-white">
       <style>{`
         @keyframes floaty {
           0%, 100% { transform: translateY(0px); }

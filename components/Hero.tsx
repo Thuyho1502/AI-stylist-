@@ -1,20 +1,25 @@
+"use client";
+
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Sparkles, ArrowRight, Shirt, Footprints, Backpack, Glasses } from "lucide-react";
 
 const outfitItems = [
-  { icon: Shirt, label: "Hoodie", rotate: "-rotate-3", delay: "0s" },
-  { icon: Footprints, label: "Sneakers", rotate: "rotate-2", delay: "0.3s" },
-  { icon: Backpack, label: "Backpack", rotate: "rotate-3", delay: "0.6s" },
-  { icon: Glasses, label: "Glasses", rotate: "-rotate-2", delay: "0.9s" },
+  { icon: Shirt,      label: "Hoodie",   rotate: "-rotate-3", delay: "0s"   },
+  { icon: Footprints, label: "Sneakers", rotate: "rotate-2",  delay: "0.3s" },
+  { icon: Backpack,   label: "Backpack", rotate: "rotate-3",  delay: "0.6s" },
+  { icon: Glasses,    label: "Glasses",  rotate: "-rotate-2", delay: "0.9s" },
 ];
 
 export default function Hero() {
+  const { data: session } = useSession();
+
   return (
-    <section className="relative overflow-hidden bg-linear-to-b from-violet-50 to-white">
+    <section className="relative overflow-hidden bg-gradient-to-b from-violet-50 to-white">
       <style>{`
         @keyframes floaty {
           0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-8px); }
+          50%       { transform: translateY(-8px); }
         }
         .float-card { animation: floaty 4s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) {
@@ -58,7 +63,17 @@ export default function Hero() {
             </a>
           </div>
 
-          <p className="mt-4 text-sm text-slate-400">No sign-up needed to try the demo</p>
+          {/* Đã login → link dashboard, chưa login → note no sign-up */}
+          {session ? (
+            <Link
+              href="/dashboard"
+              className="mt-4 inline-block text-sm text-violet-600 hover:underline font-medium"
+            >
+              Go to your Dashboard →
+            </Link>
+          ) : (
+            <p className="mt-4 text-sm text-slate-400">No sign-up needed to try the demo</p>
+          )}
         </div>
 
         {/* Visual collage */}

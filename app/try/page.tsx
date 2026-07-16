@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -59,6 +60,10 @@ function Chip({
 
 export default function TryPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+
+  const backHref  = session ? "/dashboard" : "/";
+  const backLabel = session ? "Back to Dashboard" : "Back to home";
 
   const [occasion, setOccasion] = useState("school");
   const [style,    setStyle   ] = useState("casual");
@@ -83,12 +88,7 @@ export default function TryPage() {
 
       sessionStorage.setItem(
         "outfit_result",
-        JSON.stringify({
-          variations: data.variations, // ← 3 outfit thật sự khác nhau
-          occasion,
-          style,
-          weather,
-        })
+        JSON.stringify({ variations: data.variations, occasion, style, weather })
       );
 
       router.push("/result");
@@ -112,9 +112,13 @@ export default function TryPage() {
             <span className="font-extrabold text-slate-900">Stylist</span>
           </span>
         </Link>
-        <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-violet-600 transition">
+
+        <Link
+          href={backHref}
+          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-violet-600 transition"
+        >
           <ArrowLeft className="w-4 h-4" />
-          Back to home
+          {backLabel}
         </Link>
       </header>
 

@@ -1,23 +1,51 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Shirt, Eye, EyeOff, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { data: session, status } = useSession();
+
+  const [email,        setEmail       ] = useState("");
+  const [password,     setPassword    ] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [rememberMe,   setRememberMe  ] = useState(false);
+  const [loading,      setLoading     ] = useState(false);
+  const [error,        setError       ] = useState("");
+
+  // Nếu đã login → redirect thẳng dashboard
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/dashboard");
+    }
+  }, [status, router]);
+
+  // Load email đã lưu
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("remembered_email");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Đang check session → không render gì
+  if (status === "loading" || status === "authenticated") return null;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    if (rememberMe) {
+      localStorage.setItem("remembered_email", email);
+    } else {
+      localStorage.removeItem("remembered_email");
+    }
 
     const res = await signIn("credentials", {
       email,
@@ -31,7 +59,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/try");
+    router.push("/dashboard");
   };
 
   return (
@@ -69,7 +97,10 @@ export default function LoginPage() {
         </div>
 
         {/* Heading */}
-        <h1 className="text-2xl font-extrabold text-slate-900 mb-1" style={{ fontFamily: "'Sora', sans-serif" }}>
+        <h1
+          className="text-2xl font-extrabold text-slate-900 mb-1"
+          style={{ fontFamily: "'Sora', sans-serif" }}
+        >
           Welcome back! 👋
         </h1>
         <p className="text-sm text-slate-500 mb-6">
@@ -78,6 +109,7 @@ export default function LoginPage() {
 
         {/* Form */}
         <div className="space-y-4">
+
           {/* Email */}
           <div>
             <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Email</label>
@@ -109,7 +141,18 @@ export default function LoginPage() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <div className="flex justify-end mt-1.5">
+
+            {/* Remember me + Forgot password */}
+            <div className="flex items-center justify-between mt-2.5">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded accent-violet-600 cursor-pointer"
+                />
+                <span className="text-xs text-slate-600">Remember me</span>
+              </label>
               <Link href="/forgot-password" className="text-xs text-violet-600 hover:underline">
                 Forgot password?
               </Link>
@@ -146,7 +189,7 @@ export default function LoginPage() {
 
         {/* Google */}
         <button
-          onClick={() => signIn("google", { callbackUrl: "/try" })}
+          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
           className="w-full border border-slate-200 hover:border-violet-300 text-slate-700 font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition text-sm"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">

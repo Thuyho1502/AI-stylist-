@@ -19,7 +19,7 @@ import {
 
 const navItems = [
   { label: "Overview",      href: "/dashboard",          icon: LayoutDashboard },
-  { label: "Wardrobe",      href: "/dashboard/wardrobe", icon: ShoppingBag     },
+  { label: "Wardrobe",      href: "/dashboard/wardrobe",           icon: ShoppingBag     },
   { label: "AI Stylist",    href: "/try",                icon: Sparkles        },
   { label: "Saved Outfits", href: "/dashboard/saved",    icon: Heart           },
   { label: "Profile",       href: "/dashboard/profile",  icon: User            },

@@ -12,7 +12,6 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from "recharts";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Stats {
   wardrobeItems: number;
@@ -33,7 +32,6 @@ interface WardrobeSummaryItem {
   color: string;
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const CHART_COLORS: Record<string, string> = {
   Tops:        "#7c3aed",
@@ -49,8 +47,6 @@ const OUTFIT_BG = [
   "from-blue-100 to-indigo-50",
   "from-emerald-100 to-teal-50",
 ];
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatCard({
   label, value, icon: Icon, color, bg,
@@ -99,7 +95,6 @@ function Spinner() {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -138,9 +133,9 @@ export default function DashboardPage() {
           wardrobeRes.json(),
         ]);
 
-        setStats(statsData);
-        setRecentOutfits(outfitsData);
-        setWardrobeSummary(wardrobeData);
+       setStats(statsData);
+      setRecentOutfits(Array.isArray(outfitsData) ? outfitsData : []);
+      setWardrobeSummary(Array.isArray(wardrobeData) ? wardrobeData : []);
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
       } finally {

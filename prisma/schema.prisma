@@ -7,6 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ClothingCategory {
+  TOP
+  BOTTOM
+  OUTERWEAR
+  DRESS
+  SHOES
+  BAG
+  ACCESSORY
+}
+
+enum Season {
+  SPRING
+  SUMMER
+  FALL
+  WINTER
+  ALL_SEASON
+}
+
 model User {
   id            String   @id @default(cuid())
   name          String?
@@ -22,17 +40,24 @@ model User {
 }
 
 model WardrobeItem {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  category  String
-  color     String?
-  season    String?
-  style     String?
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  imageUrl    String
+  category    ClothingCategory
+  subcategory String?
+  color       String
+  material    String?
+  pattern     String?
+  seasons     Season[]
+
+  aiAnalyzed  Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([category])
 }
 
 model Outfit {

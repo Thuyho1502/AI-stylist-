@@ -64,7 +64,11 @@ export default function ResultPage() {
   const router = useRouter();
   const [result, setResult] = useState<OutfitResult | null>(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const [savedTabs, setSavedTabs] = useState<Set<number>>(new Set());
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const saved = savedTabs.has(activeTab);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("outfit_result");
@@ -84,10 +88,43 @@ export default function ResultPage() {
 
   const current = result.variations[activeTab];
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+const handleSave = async () => {
+  if (saving || saved) return;
+  setSaving(true);
+  setSaveError(null);
+
+  try {
+    const res = await fetch("/api/outfits", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        occasion: result?.occasion,
+        style: result?.style,
+        weather: result?.weather,
+        outfit: current.outfit,
+        reason: current.reason,
+      }),
+    });
+  if (res.status === 401) {
+    setSaveError("Please log in to save your outfit. Redirecting...");
+    setTimeout(() => {
+      router.push("/login?callbackUrl=/result");
+    }, 1200);
+    return;
+  }
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Save failed");
+    }
+
+    setSavedTabs((prev) => new Set(prev).add(activeTab));
+  } catch (err: any) {
+    setSaveError(err.message || "Something went wrong");
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-50" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -191,13 +228,18 @@ export default function ResultPage() {
           </button>
           <button
             onClick={handleSave}
-            className={`flex-1 flex items-center justify-center gap-2 font-semibold py-3.5 rounded-2xl transition
+            disabled={saving || saved}
+            className={`flex-1 flex items-center justify-center gap-2 font-semibold py-3.5 rounded-2xl transition disabled:opacity-60
               ${saved ? "bg-green-500 text-white" : "bg-violet-600 hover:bg-violet-700 text-white"}`}
           >
             <Heart className={`w-4 h-4 ${saved ? "fill-white" : ""}`} />
-            {saved ? "Saved!" : "Save Outfit"}
+            {saving ? "Saving..." : saved ? "Saved" : "Save Outfit"}
           </button>
         </div>
+
+        {saveError && (
+          <p className="text-xs text-red-500 mt-2 text-center">{saveError}</p>
+        )}
       </main>
     </div>
   );

@@ -6,9 +6,11 @@ import Link from "next/link";
 import {
   Shirt, ArrowLeft, Heart, RefreshCw, Share2,
   Sparkles, Footprints, Backpack, Glasses, Watch,
+  PencilLine, Loader2, X,
 } from "lucide-react";
 
 interface OutfitVariation {
+  hero_piece?: string;
   outfit: string[];
   reason: string;
 }
@@ -68,6 +70,15 @@ export default function ResultPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const [showRefineBox, setShowRefineBox] = useState(false);
+  const [refineFeedback, setRefineFeedback] = useState("");
+  const [refining, setRefining] = useState(false);
+  const [refineError, setRefineError] = useState<string | null>(null);
+
+  const [outfitImages, setOutfitImages] = useState<Record<number, string>>({});
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
   const saved = savedTabs.has(activeTab);
 
   useEffect(() => {
@@ -84,47 +95,148 @@ export default function ResultPage() {
     setResult(parsed);
   }, [router]);
 
+  // Đóng ô refine + reset feedback khi đổi tab
+  useEffect(() => {
+    setShowRefineBox(false);
+    setRefineFeedback("");
+    setRefineError(null);
+    setImageError(null);
+  }, [activeTab]);
+
   if (!result) return null;
 
   const current = result.variations[activeTab];
 
-const handleSave = async () => {
-  if (saving || saved) return;
-  setSaving(true);
-  setSaveError(null);
+  const handleSave = async () => {
+    if (saving || saved) return;
+    setSaving(true);
+    setSaveError(null);
 
-  try {
-    const res = await fetch("/api/outfits", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        occasion: result?.occasion,
-        style: result?.style,
-        weather: result?.weather,
-        outfit: current.outfit,
-        reason: current.reason,
-      }),
-    });
-  if (res.status === 401) {
-    setSaveError("Please log in to save your outfit. Redirecting...");
-    setTimeout(() => {
-      router.push("/login?callbackUrl=/result");
-    }, 1200);
-    return;
-  }
+    try {
+      const res = await fetch("/api/outfits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          occasion: result?.occasion,
+          style: result?.style,
+          weather: result?.weather,
+          outfit: current.outfit,
+          reason: current.reason,
+        }),
+      });
 
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || "Save failed");
+      if (res.status === 401) {
+        router.push("/login?callbackUrl=/result");
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Save failed");
+      }
+
+      setSavedTabs((prev) => new Set(prev).add(activeTab));
+    } catch (err: any) {
+      setSaveError(err.message || "Something went wrong");
+    } finally {
+      setSaving(false);
     }
+  };
 
-    setSavedTabs((prev) => new Set(prev).add(activeTab));
-  } catch (err: any) {
-    setSaveError(err.message || "Something went wrong");
-  } finally {
-    setSaving(false);
-  }
-};
+  const handleRefine = async () => {
+    if (refining || refineFeedback.trim().length === 0) return;
+    setRefining(true);
+    setRefineError(null);
+
+    try {
+      const res = await fetch("/api/refine-outfit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          occasion: result.occasion,
+          style: result.style,
+          weather: result.weather,
+          originalOutfit: current,
+          feedback: refineFeedback.trim(),
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Refine failed");
+      }
+
+      const refined = await res.json();
+
+      setResult((prev) => {
+        if (!prev) return prev;
+        const updatedVariations = [...prev.variations];
+        updatedVariations[activeTab] = {
+          hero_piece: refined.hero_piece,
+          outfit: refined.outfit,
+          reason: refined.reason,
+        };
+        return { ...prev, variations: updatedVariations };
+      });
+
+      // Outfit đã đổi nội dung — nếu trước đó đã Saved thì bỏ trạng thái Saved
+      setSavedTabs((prev) => {
+        const next = new Set(prev);
+        next.delete(activeTab);
+        return next;
+      });
+
+      // Ảnh cũ không còn khớp nội dung outfit mới — xóa để user generate lại nếu muốn
+      setOutfitImages((prev) => {
+        const next = { ...prev };
+        delete next[activeTab];
+        return next;
+      });
+
+      setShowRefineBox(false);
+      setRefineFeedback("");
+    } catch (err: any) {
+      setRefineError(err.message || "Something went wrong");
+    } finally {
+      setRefining(false);
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (generatingImage) return;
+    setGeneratingImage(true);
+    setImageError(null);
+
+    try {
+      const res = await fetch("/api/generate-outfit-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          outfit: current.outfit,
+          heroPiece: current.hero_piece,
+          occasion: result.occasion,
+          style: result.style,
+        }),
+      });
+
+      if (res.status === 401) {
+        router.push("/login?callbackUrl=/result");
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Image generation failed");
+      }
+
+      const data = await res.json();
+      setOutfitImages((prev) => ({ ...prev, [activeTab]: data.imageUrl }));
+    } catch (err: any) {
+      setImageError(err.message || "Something went wrong");
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -183,16 +295,35 @@ const handleSave = async () => {
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="grid md:grid-cols-2">
 
-            {/* Left — image placeholder */}
+            {/* Left — image preview */}
             <div className="bg-gradient-to-br from-violet-50 via-purple-50 to-white flex flex-col items-center justify-center py-16 px-8 gap-4">
-              <div className="w-36 h-36 rounded-full bg-white shadow-md flex items-center justify-center">
-                <Sparkles className="w-16 h-16 text-violet-300" />
-              </div>
-              <p className="text-xs text-slate-400 text-center">
-                AI-generated outfit preview
-                <br />
-                <span className="text-violet-400">(image generation coming soon)</span>
-              </p>
+              {outfitImages[activeTab] ? (
+                <img
+                  src={outfitImages[activeTab]}
+                  alt="Generated outfit preview"
+                  className="w-full h-full max-h-72 object-contain rounded-2xl"
+                />
+              ) : (
+                <>
+                  <div className="w-36 h-36 rounded-full bg-white shadow-md flex items-center justify-center">
+                    <Sparkles className="w-16 h-16 text-violet-300" />
+                  </div>
+                  <button
+                    onClick={handleGenerateImage}
+                    disabled={generatingImage}
+                    className="flex items-center gap-2 bg-white border-2 border-violet-200 hover:border-violet-400 disabled:opacity-60 text-violet-600 text-sm font-semibold px-4 py-2.5 rounded-xl transition"
+                  >
+                    {generatingImage ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" />Generating image...</>
+                    ) : (
+                      <><Sparkles className="w-4 h-4" />Generate Preview Image</>
+                    )}
+                  </button>
+                  {imageError && (
+                    <p className="text-xs text-red-500 text-center max-w-xs">{imageError}</p>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Right — item list */}
@@ -214,6 +345,58 @@ const handleSave = async () => {
               Why this outfit?
             </p>
             <p className="text-sm text-slate-600 leading-relaxed">{current.reason}</p>
+          </div>
+
+          {/* Refine section */}
+          <div className="border-t border-slate-100 px-6 py-4">
+            {!showRefineBox ? (
+              <button
+                onClick={() => setShowRefineBox(true)}
+                className="flex items-center gap-1.5 text-sm font-medium text-violet-600 hover:text-violet-700 transition"
+              >
+                <PencilLine className="w-4 h-4" />
+                Not quite right? Refine this outfit
+              </button>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-slate-700">
+                    What would you like to change?
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowRefineBox(false);
+                      setRefineFeedback("");
+                      setRefineError(null);
+                    }}
+                    className="text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <textarea
+                  value={refineFeedback}
+                  onChange={(e) => setRefineFeedback(e.target.value)}
+                  placeholder="e.g. Remove the hat, swap the sweater for something lighter, I'd prefer flats instead of sandals..."
+                  rows={3}
+                  className="w-full border-2 border-violet-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-violet-500 resize-none"
+                />
+                {refineError && (
+                  <p className="text-xs text-red-500 mt-2">{refineError}</p>
+                )}
+                <button
+                  onClick={handleRefine}
+                  disabled={refining || refineFeedback.trim().length === 0}
+                  className="mt-3 flex items-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition"
+                >
+                  {refining ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" />Updating outfit...</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4" />Update this look</>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

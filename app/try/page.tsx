@@ -65,21 +65,49 @@ export default function TryPage() {
   const backHref  = session ? "/dashboard" : "/";
   const backLabel = session ? "Back to Dashboard" : "Back to home";
 
-  const [occasion, setOccasion] = useState("school");
-  const [style,    setStyle   ] = useState("casual");
-  const [weather,  setWeather ] = useState<string | null>(null);
-  const [loading,  setLoading ] = useState(false);
-  const [error,    setError   ] = useState("");
+  const [occasion,     setOccasion    ] = useState("school");
+  const [style,        setStyle       ] = useState("casual");
+  const [weather,      setWeather     ] = useState<string | null>(null);
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [loading,      setLoading     ] = useState(false);
+  const [error,        setError       ] = useState("");
+
+  const isOtherOccasion = occasion === "other";
 
   const handleGenerate = async () => {
+    if (isOtherOccasion && customPrompt.trim().length === 0) {
+      setError("Please describe what kind of outfit you're looking for.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
+      // Lấy wardrobe của user nếu đã login, để AI ưu tiên dùng đồ sẵn có
+      let wardrobeItems: any[] = [];
+      if (session) {
+        try {
+          const wardrobeRes = await fetch("/api/wardrobe");
+          if (wardrobeRes.ok) {
+            const wardrobeData = await wardrobeRes.json();
+            wardrobeItems = wardrobeData.items || [];
+          }
+        } catch {
+          // Nếu lấy wardrobe lỗi, vẫn tiếp tục generate bình thường không có wardrobe
+        }
+      }
+
       const res = await fetch("/api/generate-outfit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ occasion, style, weather }),
+        body: JSON.stringify({
+          occasion,
+          style,
+          weather,
+          customPrompt: customPrompt.trim() || null,
+          wardrobeItems,
+        }),
       });
 
       if (!res.ok) throw new Error("Failed");
@@ -88,7 +116,13 @@ export default function TryPage() {
 
       sessionStorage.setItem(
         "outfit_result",
-        JSON.stringify({ variations: data.variations, occasion, style, weather })
+        JSON.stringify({
+          variations: data.variations,
+          occasion,
+          style,
+          weather,
+          customPrompt: customPrompt.trim() || null,
+        })
       );
 
       router.push("/result");
@@ -139,6 +173,21 @@ export default function TryPage() {
                   selected={occasion === o.value} onClick={() => setOccasion(o.value)} />
               ))}
             </div>
+
+            {isOtherOccasion && (
+              <div className="mt-4">
+                <textarea
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  placeholder="Describe what you're looking for — e.g. going to a beach wedding, want mostly beige tones, prefer a skirt over pants, need something I can wear to a museum after..."
+                  rows={4}
+                  className="w-full border-2 border-violet-200 rounded-xl px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-violet-500 resize-none"
+                />
+                <p className="mt-1.5 text-xs text-slate-400">
+                  Tell us where you're going, preferred colors, pants vs. skirt, or anything else that matters to you.
+                </p>
+              </div>
+            )}
           </div>
 
           <div>

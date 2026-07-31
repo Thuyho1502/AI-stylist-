@@ -4,12 +4,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import { prisma } from "@/lib/prisma";
 
-const COLORS: Record<string, string> = {
-  Tops:        "#7c3aed",
-  Bottoms:     "#ec4899",
-  Shoes:       "#f59e0b",
-  Accessories: "#10b981",
-  Other:       "#64748b",
+const CATEGORY_DISPLAY: Record<string, { label: string; color: string }> = {
+  TOP:        { label: "Tops",        color: "#7c3aed" },
+  BOTTOM:     { label: "Bottoms",     color: "#ec4899" },
+  OUTERWEAR:  { label: "Outerwear",   color: "#3b82f6" },
+  DRESS:      { label: "Dresses",     color: "#f43f5e" },
+  SHOES:      { label: "Shoes",       color: "#f59e0b" },
+  BAG:        { label: "Bags",        color: "#06b6d4" },
+  ACCESSORY:  { label: "Accessories", color: "#10b981" },
 };
 
 export async function GET() {
@@ -31,11 +33,14 @@ export async function GET() {
     _count: { category: true },
   });
 
-  const summary = groups.map((g) => ({
-    name:  g.category,
-    value: g._count.category,
-    color: COLORS[g.category] ?? COLORS["Other"],
-  }));
+  const summary = groups.map((g) => {
+    const display = CATEGORY_DISPLAY[g.category] ?? { label: g.category, color: "#64748b" };
+    return {
+      name: display.label,
+      value: g._count.category,
+      color: display.color,
+    };
+  });
 
   return NextResponse.json(summary);
 }

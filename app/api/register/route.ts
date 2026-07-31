@@ -35,7 +35,8 @@ export async function POST(req: Request) {
       name: user.name,
       email: user.email,
     });
-  } catch {
+  } catch (error) {
+    console.error("Register error:", error);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }

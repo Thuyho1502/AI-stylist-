@@ -52,6 +52,8 @@ The application follows a multi-step workflow.
 - 6. Outfit is saved:  Users can save or favorite successful recommendations for later use.
 
 ## Architecture
+
+```text
                          ┌─────────────────────┐
                          │        User         │
                          └──────────┬──────────┘
@@ -81,6 +83,8 @@ The application follows a multi-step workflow.
               │             │   PostgreSQL
               ▼             ▼      (Neon)
           Text Model    Image Model
+
+```
 
 ## Tech Stack
 
@@ -154,17 +158,19 @@ The application will be available at: http://localhost:3000
 
 ## Environment Variables
 
-```
-DATABASE_URL= 	            PostgreSQL connection string
-NEXTAUTH_SECRET= 	        Secret used to sign authentication tokens
-NEXTAUTH_URL=               Application URL
-R2_ACCOUNT_ID=              Cloudflare account ID
-R2_ACCESS_KEY_ID=           Cloudflare R2 access key
-R2_SECRET_ACCESS_KEY= 	    Cloudflare R2 secret key
-R2_BUCKET_NAME= 	        R2 bucket name
-R2_PUBLIC_URL=              Public URL for stored assets
-OPENAI_API_KEY=             OpenAI API key
-```
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `NEXTAUTH_SECRET` | Secret used to sign authentication tokens |
+| `NEXTAUTH_URL` | Application URL |
+| `R2_ACCOUNT_ID` | Cloudflare account ID |
+| `R2_ACCESS_KEY_ID` | Cloudflare R2 access key |
+| `R2_SECRET_ACCESS_KEY` | Cloudflare R2 secret key |
+| `R2_BUCKET_NAME` | R2 bucket name |
+| `R2_PUBLIC_URL` | Public URL for stored assets |
+| `OPENAI_API_KEY` | OpenAI API key |
+
 
 ## Roadmap
 

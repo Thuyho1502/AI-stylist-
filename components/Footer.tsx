@@ -1,46 +1,83 @@
+"use client";
+
 import Link from "next/link";
-import { Shirt } from "lucide-react";
+
+const serif = { fontFamily: "'Bodoni Moda', serif" };
+const sans = { fontFamily: "'Hanken Grotesk', sans-serif" };
+const mono = { fontFamily: "'IBM Plex Mono', monospace" };
+const heading = { ...mono, fontSize: 11, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" as const, color: "#8C877E" };
+const link = { ...sans, fontSize: 14, color: "#5B5650", textDecoration: "none", transition: "color 0.2s" };
+
+const columns = [
+  {
+    title: "Product",
+    links: [
+      { label: "How it works", href: "#how" },
+      { label: "The algorithm", href: "#features" },
+      { label: "Your looks", href: "#discover" },
+      { label: "Try the demo", href: "/try" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Log in", href: "/login" },
+    ],
+  },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-50 border-t border-slate-100">
-      <div className="max-w-6xl mx-auto px-6 py-12 grid sm:grid-cols-2 md:grid-cols-4 gap-10">
-        <div className="col-span-2">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-violet-600 flex items-center justify-center">
-              <Shirt className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-base" style={{ fontFamily: "'Sora', sans-serif" }}>
-              <span className="font-extrabold text-violet-600">AI</span>
-              <span className="font-extrabold text-slate-900">Stylist</span>
+    <footer style={{ background: "#EFEAE1", borderTop: "1px solid rgba(23,20,15,0.07)", padding: "72px 56px 0" }}>
+      <div style={{
+        maxWidth: 1280, margin: "0 auto",
+        display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr", gap: 48,
+        paddingBottom: 56,
+      }}>
+        <div>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+            <img src="/logo.png" alt="Atelier AI" style={{ width: 34, height: 34, objectFit: "contain" }} />
+            <span style={{ ...serif, fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", color: "#17140F" }}>
+              Atelier AI
             </span>
           </Link>
-          <p className="mt-3 text-sm text-slate-500 max-w-xs">
-            Your everyday AI-powered fashion assistant — pick the perfect outfit in seconds.
+          <p style={{ ...sans, fontSize: 14, lineHeight: 1.7, color: "#8C877E", maxWidth: 280, margin: "16px 0 0" }}>
+            Your everyday AI wardrobe stylist — outfits picked from what you already own, matched to the occasion and the weather.
           </p>
         </div>
 
-        <div>
-          <h4 className="text-sm font-semibold text-slate-900">Product</h4>
-          <ul className="mt-4 space-y-2 text-sm text-slate-500">
-            <li><a href="#features" className="hover:text-violet-600">Features</a></li>
-            <li><a href="#how" className="hover:text-violet-600">How it works</a></li>
-            <li><Link href="/try" className="hover:text-violet-600">Try AI Stylist</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-sm font-semibold text-slate-900">Company</h4>
-          <ul className="mt-4 space-y-2 text-sm text-slate-500">
-            <li><Link href="/about" className="hover:text-violet-600">About</Link></li>
-            <li><Link href="/login" className="hover:text-violet-600">Log in</Link></li>
-          </ul>
-        </div>
+        {columns.map(col => (
+          <div key={col.title}>
+            <span style={{ ...heading, display: "block", marginBottom: 18 }}>{col.title}</span>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+              {col.links.map(l => (
+                <li key={l.label}>
+                  <Link href={l.href} style={link}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#17140F")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#5B5650")}
+                  >{l.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
 
-      <div className="border-t border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 py-5 text-sm text-slate-400 text-center">
-          © 2026 AI Stylist. All rights reserved.
+      <div style={{ borderTop: "1px solid rgba(23,20,15,0.07)" }}>
+        <div style={{
+          maxWidth: 1280, margin: "0 auto",
+          padding: "24px 0",
+          display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" as const, gap: 12,
+        }}>
+          <p style={{ ...sans, fontSize: 13, color: "#8C877E", margin: 0 }}>
+            Atelier AI © 2026 — outfits generated from your own wardrobe.
+          </p>
+          <div style={{ display: "flex", gap: 24 }}>
+            {["Privacy", "Terms"].map(l => (
+              <a key={l} href="#" style={{ ...mono, fontSize: 10, fontWeight: 500, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#8C877E", textDecoration: "none" }}>{l}</a>
+            ))}
+          </div>
         </div>
       </div>
     </footer>
